@@ -5,9 +5,13 @@ struct train{
     String id,sta[N];
     int sta_num,seat_num,seat[N][N],price[N],t_arrive[N],t_depart[N];
     date_time l,r,st;
-    char tp;bool rele;
+    char tp;bool rele=false;
+    String output(){
+        return id;
+    }
 };
 class train_system{
+    friend class ticket;
     int n;
     readwrite<String,train> f;
     readwrite<sjtu::pair<String,String>,train> road;
@@ -19,16 +23,8 @@ class train_system{
     passby("train.db","passby_BPT.db"){
         std::fstream ff;
         ff.open("train.db");
-        if(!ff.is_open()){
-            ff.open("train.db",std::fstream::out);
-            ff.close();ff.open("train.db");
-            n=0;ff.seekp(0);
-            ff.write(reinterpret_cast<char*>(&n),sizeof(int));
-        }
-        else{
-            ff.seekg(0);
-            ff.read(reinterpret_cast<char*>(&n),sizeof(int));
-        }
+        ff.seekg(0);
+        ff.read(reinterpret_cast<char*>(&n),sizeof(int));
         ff.close();
     }
     ~train_system(){
@@ -48,22 +44,23 @@ class train_system{
         nw.sta_num=_num;
         nw.seat_num=_seat;
         int tot=count_day(l,r);
-        for(int i=0;i<nw.sta_num-1;i++){
+        for(int i=0;i<nw.sta_num;i++){
             for(int j=1;j<=tot;j++)
                 nw.seat[j][i]=_seat;
         }
         for(int i=0;i<nw.sta_num;i++){
             nw.sta[i]=sta[i];
         }
+        nw.price[0]=0;
         for(int i=1;i<nw.sta_num;i++){
             nw.price[i]=nw.price[i-1]+price[i];
         }
-        nw.st=st;
         nw.t_depart[0]=0;
         for(int i=1;i<nw.sta_num;i++){
             nw.t_arrive[i]=nw.t_depart[i-1]+t_drive[i];
             if(i!=nw.sta_num-1) nw.t_depart[i]=nw.t_arrive[i]+t_stop[i];
         }
+        nw.st=st;nw.rele=false;
         nw.l=l;nw.l.x=st.x;nw.l.y=st.y;
         nw.r=r;nw.r.x=st.x;nw.r.y=st.y;
         nw.tp=tp;
@@ -111,6 +108,7 @@ class train_system{
             printf("-1\n");
             return ;
         }
+        nw.l.x=nw.l.y=nw.r.x=nw.r.y=0;
         if(nw.l>d||nw.r<d){
             printf("-1\n");
             return ;

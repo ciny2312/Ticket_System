@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include "../train/train.hpp"
-
+extern train_system ts;
 struct order{
     String username,id,from,to;
     date_time l,r;
@@ -18,6 +18,9 @@ struct order{
         }
         o<<' '<<x.username<<' '<<x.from<<' '<<x.l<<' '<<" to "<<x.to<<' '<<x.r<<' '<<' '<<x.price<<' '<<x.num;
         return o;
+    }
+    String output(){
+        return id;
     }
 };
 struct comp{
@@ -43,30 +46,20 @@ struct trans{
     bool operator < (const trans &oth)const{
         return id2<oth.id2;
     }
+    bool operator > (const trans &oth)const{
+        return id2>oth.id2;
+    }
 };
 class ticket{
     int n;
     readwrite<String,order> f;
-    readwrite<String,train> ftrain;
     readwrite<sjtu::pair<String,int>,order> waitqueue;
-    readwrite<String,train> passby;
-    readwrite<sjtu::pair<String,String>,train> road;
     public:
-    ticket():f("ticket.db","orders_BPT.db"),ftrain("train.db","train_BPT.db"),
-    waitqueue("ticket.db","queue_BPT.db"),passby("train.db","passby_BPT.db"),
-    road("train.db","road_BPT.db"){
+    ticket():f("ticket.db","orders_BPT.db"),waitqueue("ticket.db","queue_BPT.db"){
         std::fstream ff;
         ff.open("ticket.db");
-        if(!ff.is_open()){
-            ff.open("ticket.db",std::fstream::out);
-            ff.close();ff.open("ticket.db");
-            n=0;ff.seekp(0);
-            ff.write(reinterpret_cast<char*>(&n),sizeof(int));
-        }
-        else{
-            ff.seekg(0);
-            ff.read(reinterpret_cast<char*>(&n),sizeof(int));
-        }
+        ff.seekg(0);
+        ff.read(reinterpret_cast<char*>(&n),sizeof(int));
         ff.close();
     }
     ~ticket(){
@@ -76,9 +69,9 @@ class ticket{
         ff.write(reinterpret_cast<char*>(&n),sizeof(int));
         ff.close();
     }
-    void buy_ticket(String user,String id,date_time d,int n,String from,String to,bool q=false){
+    void buy_ticket(String user,String id,date_time d,int num,String from,String to,bool q=false){
         train nw;int pos;
-        if(!ftrain.find(id,nw,pos)){
+        if(!ts.f.find(id,nw,pos)){
             printf("-1\n");
             return ;
         }
@@ -87,6 +80,10 @@ class ticket{
             return ;
         }
         int l=find_pos(nw,from),r=find_pos(nw,to);
+        if(l==-1||r==-1){
+            printf("-1\n");
+            return ;
+        }
         date_time t1=nw.l,t2=nw.r;
         t1.y+=nw.t_depart[l];
         t2.y+=nw.t_depart[l];
@@ -101,14 +98,15 @@ class ticket{
         ///
         //
         int rest_num=ask_seat(nw,day,l,r);
-        if(rest_num<n&&!q){
+        if(rest_num<num&&!q){
             printf("-1\n");
+            return ;
         }
         order x;
         x.username=user;
         x.id=id;
         x.from=from;x.to=to;
-        x.num=n;x.day=day;
+        x.num=num;x.day=day;
         x.from_n=l;x.to_n=r;
         
         x.l=x.r=nw.l;
@@ -120,14 +118,14 @@ class ticket{
         x.l.format();x.r.format();
 
         x.price=nw.price[r]-nw.price[l];
-        if(rest_num>=n){
+        if(rest_num>=num){
             for(int i=l;i<r;i++){
-                nw.seat[day][i]-=n;
+                nw.seat[day][i]-=num;
             }
-            ftrain.updata(pos,nw);
+            ts.f.updata(pos,nw);
             x.status=1;x.pos=n+1;
             f.insert(user,x,n);
-            printf("%d\n",x.price*n);
+            printf("%d\n",x.price*num);
             return ;
         }
         x.status=0;x.pos=n+1;
@@ -149,73 +147,42 @@ class ticket{
             else{
                 std::cout<<"[success]";
             }
-            std::cout<<' '<<ans[i].username<<' '<<ans[i].from<<' '<<ans[i].l<<' '<<" to "
-            <<ans[i].to<<' '<<ans[i].r<<' '<<' '<<ans[i].price<<' '<<ans[i].num;
+            std::cout<<' '<<ans[i].id<<' '<<ans[i].from<<' '<<ans[i].l<<" -> "
+            <<ans[i].to<<' '<<ans[i].r<<' '<<ans[i].price<<' '<<ans[i].num<<std::endl;
         }
     }
     void query_ticket(String s,String t,date_time d,bool type=true){
         sjtu::pair<String, String>key(s,t);
         sjtu::vector<train> ans;
-        road.getall(key,ans);
+        ts.road.getall(key,ans);
         sjtu::priority_queue<sjtu::pair<int,sjtu::pair<String,int> > > q;
-        if(type){
-            for(int i=0;i<ans.size();i++){
-                train x=ans[i];
-                for(int i=0;i<x.sta_num;i++){
-                    if(x.sta[i]==s){
-                        date_time t1=x.l,t2=x.r;
-                        t1.y+=x.t_depart[i];
-                        t2.y+=x.t_depart[i];
-                        t1.format();t2.format();
-                        t1.x=t1.y=t2.x=t2.y=0;
-                        if(d<t1||t2<d) continue;
-                        sjtu::pair<String,int>key(x.id,i);
-                        int tim;
-                        for(int j=i;j<x.sta_num;j++){
-                            if(x.sta[j]==t){
-                                tim=x.t_arrive[j]-x.t_depart[i];
-                                break;
-                            }
-                        }
-                        q.push(sjtu::pair<int,sjtu::pair<String,int> >(tim,key));
-                        break;
-                    }
-                }
+        for(int p=0;p<ans.size();p++){
+            train x=ans[p];int i=find_pos(x,s);
+            date_time t1=x.l,t2=x.r;
+            t1.y+=x.t_depart[i];
+            t2.y+=x.t_depart[i];
+            t1.format();t2.format();
+            t1.x=t1.y=t2.x=t2.y=0;
+            if(d<t1||t2<d) continue;
+            sjtu::pair<String,int>key(x.id,p);
+            int j=find_pos(x,t);
+            if(type){
+                int tim=x.t_arrive[j]-x.t_depart[i];
+                q.push(sjtu::pair<int,sjtu::pair<String,int> >(tim,key));
             }
-        }
-        else{
-            for(int i=0;i<ans.size();i++){
-                train x=ans[i];
-                for(int i=0;i<x.sta_num;i++){
-                    if(x.sta[i]==s){
-                        date_time t1=x.l,t2=x.r;
-                        t1.y+=x.t_depart[i];
-                        t2.y+=x.t_depart[i];
-                        t1.format();t2.format();
-                        t1.x=t1.y=t2.x=t2.y=0;
-                        if(d<t1||t2<d) continue;
-                        sjtu::pair<String,int>key(x.id,i);
-                        int cos;
-                        for(int j=i;j<x.sta_num;j++){
-                            if(x.sta[j]==t){
-                                cos=x.price[j]-x.price[i];
-                                break;
-                            }
-                        }
-                        q.push(sjtu::pair<int,sjtu::pair<String,int> >(cos,key));
-                        break;
-                    }
-                }
+            else{
+                int cos=x.price[j]-x.price[i];
+                q.push(sjtu::pair<int,sjtu::pair<String,int> >(cos,key));
             }
         }
         std::cout<<q.size()<<std::endl;
         while(!q.empty()){
-            int i=q.top().second.second;
+            int i=q.top().second.second;q.pop();
             train x=ans[i];date_time t1,t2;
-            int l=find_pos(x,s),r=find_pos(x,t),day;
+            int l=find_pos(x,s),r=find_pos(x,t);
             t1=x.l;t1.y+=x.t_depart[l];t1.format();
             t2=x.l;t2.y+=x.t_arrive[r];t2.format();
-            int ex=count_day(t1,d);
+            int ex=count_day(t1,d)-1;
             t1.dy+=ex;t1.format();
             t2.dy+=ex;t2.format();
             std::cout<<x.id<<' '<<s<<' '<<t1<<" -> "<<t<<' '<<t2<<' '<<x.price[r]-x.price[l]<<' ';
@@ -224,7 +191,7 @@ class ticket{
     }
     void query_transfer(String s,String t,date_time d,bool type=true){
         sjtu::vector<train>ans;
-        passby.getall(s,ans);
+        ts.passby.getall(s,ans);
         sjtu::priority_queue<sjtu::pair<comp,trans> >q;
         for(int i=0;i<ans.size();i++){
             train x=ans[i];
@@ -246,7 +213,7 @@ class ticket{
 
                 sjtu::pair<String, String> key(x.sta[ti],t);
                 sjtu::vector<train> ans2;
-                road.getall(key,ans2);
+                ts.road.getall(key,ans2);
                 for(int j=0;j<ans2.size();j++){
                     train y=ans2[j];
                     int ssi=find_pos(y,x.sta[ti]),tti=find_pos(y,t);
@@ -254,23 +221,24 @@ class ticket{
                     if(b1<t2){
                         continue;
                     }
-                    int day=std::max(0,count_day(t2,b1)-2);
-                    b1.dy-=day;b1.format();
-                    date_time early=y.l;early.y+=y.t_depart[ssi];early.format();
-                    while(b1>t2){
-                        b1.dy--;
-                        b1.format();
+                    b1=y.l;b1.y+=y.t_depart[ssi];b1.format();
+                    int ex2=0;
+                    if(b1<t2){
+                        int day=count_day(b1,t2)-1;
+                        b1.dy+=day;b1.format();
+                        ex2+=day;
+                        if(b1<t2){
+                            b1.dy++;ex2++;
+                            b1.format();
+                        }
                     }
-                    if(early>b1){
-                        b1=early;
-                    }
-                    int ex2=count_day(y.l,b1)-1;
+
                     date_time b2=y.l;b2.y+=y.t_arrive[tti];b2.format();
                     b2.dy+=ex2;b2.format();
                     comp key;trans val;
-                    val.price1=y.price[tti]-y.price[ssi];
-                    val.price2=x.price[ti]-x.price[si];
-                    val.s=x.sta[j];
+                    val.price1=x.price[ti]-x.price[si];
+                    val.price2=y.price[tti]-y.price[ssi];
+                    val.s=x.sta[ti];
                     val.a1=t1;
                     val.a2=t2;
                     val.b1=b1;
@@ -294,17 +262,17 @@ class ticket{
             return ;
         }
         trans x=q.top().second;
-        std::cout<<x.id1<<' '<<s<<' '<<x.a1<<" -> "<<t<<' '<<x.a2<<' '<<x.price1<<' '<<x.num1;
-        std::cout<<x.id2<<' '<<s<<' '<<x.b1<<" -> "<<t<<' '<<x.b2<<' '<<x.price2<<' '<<x.num2;
+        std::cout<<x.id1<<' '<<s<<' '<<x.a1<<" -> "<<x.s<<' '<<x.a2<<' '<<x.price1<<' '<<x.num1<<std::endl;
+        std::cout<<x.id2<<' '<<x.s<<' '<<x.b1<<" -> "<<t<<' '<<x.b2<<' '<<x.price2<<' '<<x.num2<<std::endl;
     }
-    void refund_ticket(String user,int n){
+    void refund_ticket(String user,int num){
         sjtu::vector<order> ans;
         f.getall(user,ans);
-        if(ans.size()<n){
+        if(ans.size()<num){
             printf("-1\n");
             return ;
         }
-        order nw=ans[ans.size()-n];
+        order nw=ans[ans.size()-num];
         if(nw.status==-1){
             printf("-1\n");
             return ;
@@ -312,7 +280,7 @@ class ticket{
         if(nw.status==1){
             nw.status=-1;
             train p;int pos;
-            ftrain.find(nw.id,p,pos);
+            ts.f.find(nw.id,p,pos);
             for(int i=nw.from_n;i<nw.to_n;i++){
                 p.seat[nw.day][i]+=nw.num;
             }
@@ -328,13 +296,13 @@ class ticket{
                     for(int j=x.from_n;j<x.to_n;j++){
                         p.seat[x.day][j]-=x.num;
                     }
+                    x.status=1;
+                    f.updata(x.pos,x);
+                    waitqueue.del(key,x.pos);
                 }
-                x.status=1;
-                f.updata(x.pos,x);
-                waitqueue.del(key,x.pos);
             }
             f.updata(nw.pos,nw);
-            ftrain.updata(pos,p);
+            ts.f.updata(pos,p);
             printf("0\n");
             return ;
         }

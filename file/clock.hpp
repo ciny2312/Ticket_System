@@ -5,7 +5,7 @@ struct date_time{
     int dx,dy;
     void format(){
         if(y>=60){
-            x+=y%60;
+            x+=y/60;
             y%=60;
         }
         if(x>=24){
@@ -13,12 +13,16 @@ struct date_time{
             x%=24;
         }
         if(dx==6&&dy>30){
-            dx+=dy/30;
-            dy%=30;
+            dx++;
+            dy-=30;
         }
         if(dx==7&&dy>31){
-            dx+=dy/31;
-            dy%=31;
+            dx++;
+            dy-=31;
+        }
+        if(dx==8&&dy>31){
+            dx++;
+            dy-=31;
         }
     }
     bool operator < (const date_time &oth){
@@ -81,15 +85,15 @@ struct date_time{
     }
     friend int count_day(date_time x,date_time y){
         while(y.dx>x.dx){
+            if(y.dx==9){
+                y.dx--;
+                y.dy+=31;
+            }
             if(y.dx==8){
                 y.dx--;
                 y.dy+=31;
             }
             else if(y.dx==7){
-                y.dx--;
-                y.dy+=31;
-            }
-            else {
                 y.dx--;
                 y.dy+=30;
             }
@@ -104,11 +108,11 @@ struct date_time{
             }
             if(y.dx==7){
                 y.dx--;
-                y.dy+=31;
+                y.dy+=30;
             }
         }
         if(y.dy>x.dy){
-            x.x+=(y.dy-x.dy)*24;
+            y.x+=(y.dy-x.dy)*24;
             y.dy=x.dy;
         }
         if(y.x>x.x){

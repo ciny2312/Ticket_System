@@ -6,6 +6,7 @@
 #include "vector.hpp"
 #include "map.hpp"
 #include "priority_queue.hpp"
+
 template <class T1,class T2>
 class readwrite{
     std::fstream f1;
@@ -13,6 +14,16 @@ class readwrite{
     public:
     readwrite(std::string s1,std::string s2):f(s2){
         f1.open(s1);
+        if(!f1.is_open()){
+            int n=0;
+            f1.open(s1,std::fstream::out);
+            f1.seekp(0);f1.write(reinterpret_cast<char*>(&n),sizeof(n));
+            f1.close();f1.open(s1);
+        }
+    /*    if (!f1.is_open()) {
+            std::cerr << "readwrite:File not open." << std::endl;
+            return;
+        }*/
     }
     ~readwrite(){
         f1.close();
@@ -33,7 +44,7 @@ class readwrite{
         f.find(key,x);
         int n=x.size();T2 val;
         for(int i=0;i<n;i++){
-            f1.seekp(sizeof(int)+sizeof(T2)*(x[i]-1));
+            f1.seekg(sizeof(int)+sizeof(T2)*(x[i]-1));
             f1.read(reinterpret_cast<char*>(&val),sizeof(T2));
             ans.push_back(val);
         }
@@ -44,6 +55,59 @@ class readwrite{
         f1.write(reinterpret_cast<char*>(&val),sizeof(T2));
         n++;
         f.insert(key,n);
+    /*    // 检查文件是否已打开
+        if (!f1.is_open()) {
+            std::cerr << "insert:File not open." << std::endl;
+            return;
+        }
+        
+        // 计算写入位置
+        std::streampos write_pos = sizeof(int) + sizeof(T2) * n;
+        std::cout << "Attempting to seek to position: " << write_pos << std::endl;
+
+        // 移动写指针并检查
+        f1.seekp(write_pos);
+        if (!f1) {
+            std::cerr << "Seekp failed. Error state: " << f1.rdstate() << std::endl;
+            return;
+        }
+
+        // 写入数据并检查
+        f1.write(reinterpret_cast<char*>(&val), sizeof(T2));
+        if (!f1) {
+            std::cerr << "Write failed." << std::endl;
+            return;
+        }
+
+        // 强制刷新到磁盘
+        f1.flush();
+
+        // 移动读指针并检查
+        f1.seekg(write_pos);
+        if (!f1) {
+            std::cerr << "Seekg failed." << std::endl;
+            return;
+        }
+
+        // 读取数据并检查
+        T2 nw;
+        f1.read(reinterpret_cast<char*>(&nw), sizeof(T2));
+        if (!f1) {
+            std::cerr << "Read failed." << std::endl;
+            return;
+        }
+
+        // 输出调试信息
+        std::cout << "HERE3: " << val.output() << std::endl;
+        std::cout << "HERE3: " << nw.output() << std::endl;
+
+        // 增加索引
+        n++;
+
+        // 插入键值对到容器/映射
+        f.insert(key, n);
+        
+        */
     }
     void do_insert(T1 key,int n){
         f.insert(key,n);

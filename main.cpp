@@ -1,17 +1,20 @@
 #include"users/users.hpp"
+#include <fstream>
 #include <sstream>
 user_system us;
 train_system ts;
 ticket t;
 int main(){
-    freopen("1.in","r",stdin);
+    freopen("25.in","r",stdin);
     freopen("a.out","w",stdout);
+    
+    bool flag;
     std::string line,time_stamp,s;
     while(getline(std::cin, line)){
         std::stringstream ss;
         ss.clear();
         ss << line;
-        ss >> time_stamp;
+        ss >> time_stamp;flag=time_stamp=="[69053]";
         std::cout << time_stamp << " ";
         ss >> s;
         if(s=="exit"){
@@ -71,7 +74,6 @@ int main(){
                 }
             }
             us.log_in(username, password);
-
         }
         else if(s=="logout"){
             std::string tmp, username;
@@ -126,7 +128,7 @@ int main(){
                     }
                 }
             }
-            us.modify_profile(cur_username, username, password, name, mailAddr, privilege);
+            us.modify_profile(cur_username, username, password, !password.empty(), name, !name.empty(), mailAddr, !mailAddr.empty(), privilege);
         }
         else if(s=="add_train"){
             std::string tmp, trainID, stations, prices, startTime, travelTimes, stopoverTimes, saleDate;
@@ -165,7 +167,7 @@ int main(){
                     case 'p': {
                         ss >> prices;
                         int ans=0;int tot=0;
-                        for(int i=1;i<prices.length();i++){
+                        for(int i=0;i<prices.length();i++){
                             if(prices[i]=='|'){
                                 price[++tot]=ans;
                                 ans=0;
@@ -184,7 +186,7 @@ int main(){
                     case 't': {
                         ss >> travelTimes;
                         int ans=0;int tot=0;
-                        for(int i=1;i<travelTimes.length();i++){
+                        for(int i=0;i<travelTimes.length();i++){
                             if(travelTimes[i]=='|'){
                                 t_drive[++tot]=ans;
                                 ans=0;
@@ -197,7 +199,7 @@ int main(){
                     case 'o': {
                         ss >> stopoverTimes;
                         int ans=0;int tot=0;
-                        for(int i=1;i<stopoverTimes.length()-1;i++){
+                        for(int i=0;i<stopoverTimes.length();i++){
                             if(stopoverTimes[i]=='|'){
                                 t_stop[++tot]=ans;
                                 ans=0;
@@ -245,6 +247,9 @@ int main(){
                     }
                     case 'd': {
                         ss >> date;
+                        d.dx=(date[0]-'0')*10+date[1]-'0';
+                        d.dy=(date[3]-'0')*10+date[4]-'0';
+                        d.x=d.y=0;
                         break;
                     }
                 }
@@ -262,6 +267,7 @@ int main(){
                         ss >> date;
                         d.dx=(date[0]-'0')*10+date[1]-'0';
                         d.dy=(date[3]-'0')*10+date[4]-'0';
+                        d.x=d.y=0;
                         break;
                     }
                     case 's': {
@@ -296,6 +302,7 @@ int main(){
                         ss >> date;
                         d.dx=(date[0]-'0')*10+date[1]-'0';
                         d.dy=(date[3]-'0')*10+date[4]-'0';
+                        d.x=d.y=0;
                         break;
                     }
                     case 's': {
@@ -338,6 +345,7 @@ int main(){
                         ss >> date;
                         d.dx=(date[0]-'0')*10+date[1]-'0';
                         d.dy=(date[3]-'0')*10+date[4]-'0';
+                        d.x=d.y=0;
                         break;
                     }
                     case 'n': {
@@ -364,12 +372,12 @@ int main(){
                     }
                 }
             }
-            t.buy_ticket(username, trainID, d, num, from, to, que);
+            us.buy_ticket(username, trainID, d, num, from, to, que);
         }
         else if(s=="query_order"){
             std::string tmp, username;
             ss >> tmp >> username;
-            t.query_order(username);
+            us.query_order(username);
         }
         else if(s=="refund_ticket"){
             std::string tmp, username;
@@ -386,7 +394,7 @@ int main(){
                     }
                 }
             }
-            t.refund_ticket(username, num);
+            us.refund_ticket(username, num);
         }
     }
     return 0;

@@ -1,4 +1,7 @@
-test/data/*
+build
+test/
+.cache/
 *.db
 *.in
 *.out
+12

@@ -10,7 +10,7 @@ namespace sjtu {
 /**
  * a container like std::priority_queue which is a heap internal.
  */
-template<typename T, class Compare = std::less<T>>
+template<typename T, class Compare = std::greater<T> >
 class priority_queue {
 	class node{
 		public:
