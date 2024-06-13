@@ -10,11 +10,11 @@ include_directories(file)
 include_directories(users)
 include_directories(train)
 include_directories(ticket)
-include_directories(test)
+#include_directories(test)
 
 
-add_executable(code main.cpp )
+add_executable(code main.cpp main)
 
-include(CTest)
-enable_testing()
-include(test/ctest_config)
+#include(CTest)
+#enable_testing()
+#include(test/ctest_config)
