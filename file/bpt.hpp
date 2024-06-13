@@ -6,7 +6,7 @@
 #include <string>
 
 struct String {
-  char s[70];
+  char s[45];
   String()=default;
   String(std::string ch){
     strcpy(s, ch.c_str());
