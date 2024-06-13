@@ -5,8 +5,8 @@ user_system us;
 train_system ts;
 ticket t;
 int main(){
-    freopen("25.in","r",stdin);
-    freopen("a.out","w",stdout);
+//    freopen("47.in","r",stdin);
+//    freopen("a.out","w",stdout);
     
     bool flag;
     std::string line,time_stamp,s;
@@ -14,7 +14,7 @@ int main(){
         std::stringstream ss;
         ss.clear();
         ss << line;
-        ss >> time_stamp;flag=time_stamp=="[69053]";
+        ss >> time_stamp;flag=time_stamp=="[1910288]";
         std::cout << time_stamp << " ";
         ss >> s;
         if(s=="exit"){
@@ -316,10 +316,10 @@ int main(){
                     case 'p': {
                         ss >> tmp;
                         if (tmp == "time") {
-                            _type = false;
+                            _type = true;
                         }
                         else if (tmp == "cost") {
-                            _type = true;
+                            _type = false;
                         }
                         break;
                     }

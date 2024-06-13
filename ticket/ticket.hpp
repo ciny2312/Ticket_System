@@ -79,8 +79,12 @@ class ticket{
             printf("-1\n");
             return ;
         }
+        if(nw.seat_num<num){
+            printf("-1\n");
+            return ;
+        }
         int l=find_pos(nw,from),r=find_pos(nw,to);
-        if(l==-1||r==-1){
+        if(l==-1||r==-1||l>=r){
             printf("-1\n");
             return ;
         }
@@ -216,6 +220,7 @@ class ticket{
                 ts.road.getall(key,ans2);
                 for(int j=0;j<ans2.size();j++){
                     train y=ans2[j];
+                    if(x.id==y.id) continue;
                     int ssi=find_pos(y,x.sta[ti]),tti=find_pos(y,t);
                     date_time b1=y.r;b1.y+=y.t_depart[ssi];b1.format();
                     if(b1<t2){

@@ -89,11 +89,19 @@ struct date_time{
                 y.dx--;
                 y.dy+=31;
             }
-            if(y.dx==8){
+            else if(y.dx==8){
                 y.dx--;
                 y.dy+=31;
             }
             else if(y.dx==7){
+                y.dx--;
+                y.dy+=30;
+            }
+            else if(y.dx==6){
+                y.dx--;
+                y.dy+=31;
+            }
+            else if(y.dx==5){
                 y.dx--;
                 y.dy+=30;
             }
@@ -102,11 +110,23 @@ struct date_time{
     }
     friend int ask_num(date_time x,date_time y){
         while(y.dx>x.dx){
-            if(y.dx==8){
+            if(y.dx==9){
                 y.dx--;
                 y.dy+=31;
             }
-            if(y.dx==7){
+            else if(y.dx==8){
+                y.dx--;
+                y.dy+=31;
+            }
+            else if(y.dx==7){
+                y.dx--;
+                y.dy+=30;
+            }
+            else if(y.dx==6){
+                y.dx--;
+                y.dy+=31;
+            }
+            else if(y.dx==5){
                 y.dx--;
                 y.dy+=30;
             }
