@@ -46,7 +46,6 @@ class readwrite{
     void ask_pos(int pos,T2 &ans){
         f1.seekg(sizeof(int)+sizeof(T2)*(pos-1));
         f1.read(reinterpret_cast<char*>(&ans),sizeof(T2));
-        return ans;
     }
     void insert(T1 &key,T2 &val,int &n){
         f1.seekp(sizeof(int)+sizeof(T2)*n);
