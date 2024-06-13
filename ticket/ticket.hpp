@@ -138,30 +138,32 @@ class ticket{
         printf("queue\n");
     }
     void query_order(String user){
-        sjtu::vector<order> ans;
+        sjtu::vector<int> ans;
         f.getall(user,ans);
         std::cout<<ans.size()<<std::endl;
         for(int i=ans.size()-1;i>=0;i--){
-            if(ans[i].status==-1){
+            order x;f.ask_pos(ans[i],x);
+            if(x.status==-1){
                 std::cout<<"[refunded]";
             }
-            else if(ans[i].status==0){
+            else if(x.status==0){
                 std::cout<<"[pending]";
             }
             else{
                 std::cout<<"[success]";
             }
-            std::cout<<' '<<ans[i].id<<' '<<ans[i].from<<' '<<ans[i].l<<" -> "
-            <<ans[i].to<<' '<<ans[i].r<<' '<<ans[i].price<<' '<<ans[i].num<<std::endl;
+            std::cout<<' '<<x.id<<' '<<x.from<<' '<<x.l<<" -> "
+            <<x.to<<' '<<x.r<<' '<<x.price<<' '<<x.num<<std::endl;
         }
     }
     void query_ticket(String s,String t,date_time d,bool type=true){
         sjtu::pair<String, String>key(s,t);
-        sjtu::vector<train> ans;
+        sjtu::vector<int> ans;
         ts.road.getall(key,ans);
         sjtu::priority_queue<sjtu::pair<int,sjtu::pair<String,int> > > q;
         for(int p=0;p<ans.size();p++){
-            train x=ans[p];int i=find_pos(x,s);
+            train x;ts.f.ask_pos(ans[p],x);
+            int i=find_pos(x,s);
             date_time t1=x.l,t2=x.r;
             t1.y+=x.t_depart[i];
             t2.y+=x.t_depart[i];
@@ -182,7 +184,8 @@ class ticket{
         std::cout<<q.size()<<std::endl;
         while(!q.empty()){
             int i=q.top().second.second;q.pop();
-            train x=ans[i];date_time t1,t2;
+            train x;ts.f.ask_pos(ans[i],x);
+            date_time t1,t2;
             int l=find_pos(x,s),r=find_pos(x,t);
             t1=x.l;t1.y+=x.t_depart[l];t1.format();
             t2=x.l;t2.y+=x.t_arrive[r];t2.format();
@@ -194,11 +197,11 @@ class ticket{
         }
     }
     void query_transfer(String s,String t,date_time d,bool type=true){
-        sjtu::vector<train>ans;
+        sjtu::vector<int>ans;
         ts.passby.getall(s,ans);
         sjtu::priority_queue<sjtu::pair<comp,trans> >q;
         for(int i=0;i<ans.size();i++){
-            train x=ans[i];
+            train x;ts.f.ask_pos(ans[i],x);
             int si=find_pos(x,s);
 
             date_time t1=x.l,t2=x.r;
@@ -216,10 +219,10 @@ class ticket{
                 t2=x.l;t2.y+=x.t_arrive[ti];t2.dy+=ex;t2.format();
 
                 sjtu::pair<String, String> key(x.sta[ti],t);
-                sjtu::vector<train> ans2;
+                sjtu::vector<int> ans2;
                 ts.road.getall(key,ans2);
                 for(int j=0;j<ans2.size();j++){
-                    train y=ans2[j];
+                    train y;ts.f.ask_pos(ans2[j],y);
                     if(x.id==y.id) continue;
                     int ssi=find_pos(y,x.sta[ti]),tti=find_pos(y,t);
                     date_time b1=y.r;b1.y+=y.t_depart[ssi];b1.format();
@@ -271,13 +274,14 @@ class ticket{
         std::cout<<x.id2<<' '<<x.s<<' '<<x.b1<<" -> "<<t<<' '<<x.b2<<' '<<x.price2<<' '<<x.num2<<std::endl;
     }
     void refund_ticket(String user,int num){
-        sjtu::vector<order> ans;
+        sjtu::vector<int> ans;
         f.getall(user,ans);
         if(ans.size()<num){
             printf("-1\n");
             return ;
         }
-        order nw=ans[ans.size()-num];
+        order nw;
+        f.ask_pos(ans[ans.size()-num],nw);
         if(nw.status==-1){
             printf("-1\n");
             return ;
@@ -289,11 +293,11 @@ class ticket{
             for(int i=nw.from_n;i<nw.to_n;i++){
                 p.seat[nw.day][i]+=nw.num;
             }
-            sjtu::vector<order>queue;
+            sjtu::vector<int>queue;
             sjtu::pair<String,int> key(nw.id,nw.day);
             waitqueue.getall(key,queue);
             for(int i=0;i<queue.size();i++){
-                order x=queue[i];
+                order x;f.ask_pos(queue[i],x);
                 if(x.from_n>nw.to_n||x.to_n<nw.from_n){
                     continue;
                 }

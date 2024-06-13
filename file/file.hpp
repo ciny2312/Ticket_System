@@ -39,16 +39,14 @@ class readwrite{
         f1.read(reinterpret_cast<char*>(&val),sizeof(T2));
         return true;
     }
-    void getall(T1 &key,sjtu::vector<T2> &ans){
-        sjtu::vector<int>x;
-        f.find(key,x);
-        int n=x.size();T2 val;
-        for(int i=0;i<n;i++){
-            f1.seekg(sizeof(int)+sizeof(T2)*(x[i]-1));
-            f1.read(reinterpret_cast<char*>(&val),sizeof(T2));
-            ans.push_back(val);
-        }
+    void getall(T1 &key,sjtu::vector<int> &ans){
+        f.find(key,ans);
         return ;
+    }
+    void ask_pos(int pos,T2 &ans){
+        f1.seekg(sizeof(int)+sizeof(T2)*(pos-1));
+        f1.read(reinterpret_cast<char*>(&ans),sizeof(T2));
+        return ans;
     }
     void insert(T1 &key,T2 &val,int &n){
         f1.seekp(sizeof(int)+sizeof(T2)*n);
