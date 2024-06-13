@@ -13,7 +13,7 @@ include_directories(ticket)
 #include_directories(test)
 
 
-add_executable(code main.cpp main)
+add_executable(code main.cpp )
 
 #include(CTest)
 #enable_testing()
