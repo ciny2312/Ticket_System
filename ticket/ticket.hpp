@@ -40,9 +40,9 @@ struct comp{
     }
 };
 struct trans{
-    String s,id1,id2;
+    String id1,id2;
     date_time a1,a2,b1,b2; 
-    int price1,price2,num1,num2;
+    int s,price1,price2,num1,num2;
     bool operator < (const trans &oth)const{
         return id2<oth.id2;
     }
@@ -69,6 +69,11 @@ class ticket{
         ff.write(reinterpret_cast<char*>(&n),sizeof(int));
         ff.close();
     }
+    String station_print(int pos){
+        String val;
+        ts.station.ask_pos(pos,val);
+        return val;
+    }
     void buy_ticket(String user,String id,date_time d,int num,String from,String to,bool q=false){
         train nw;int pos;
         if(!ts.f.find(id,nw,pos)){
@@ -83,7 +88,16 @@ class ticket{
             printf("-1\n");
             return ;
         }
-        int l=find_pos(nw,from),r=find_pos(nw,to);
+        int from_x,to_y;
+        if(!ts.station.find(from,from,from_x)){
+            printf("-1\n");
+            return ;
+        }
+        if(!ts.station.find(to,to,to_y)){
+            printf("-1\n");
+            return ;
+        }
+        int l=find_pos(nw,from_x),r=find_pos(nw,to_y);
         if(l==-1||r==-1||l>=r){
             printf("-1\n");
             return ;
@@ -157,13 +171,22 @@ class ticket{
         }
     }
     void query_ticket(String s,String t,date_time d,bool type=true){
-        sjtu::pair<String, String>key(s,t);
+        int s_x,t_y;
+        if(!ts.station.find(s,s,s_x)){
+            printf("0\n");
+            return ;
+        }
+        if(!ts.station.find(t,t,t_y)){
+            printf("0\n");
+            return ;
+        }
+        sjtu::pair<int,int>key(s_x,t_y);
         sjtu::vector<int> ans;
         ts.road.getall(key,ans);
         sjtu::priority_queue<sjtu::pair<int,sjtu::pair<String,int> > > q;
         for(int p=0;p<ans.size();p++){
             train x;ts.f.ask_pos(ans[p],x);
-            int i=find_pos(x,s);
+            int i=find_pos(x,s_x);
             date_time t1=x.l,t2=x.r;
             t1.y+=x.t_depart[i];
             t2.y+=x.t_depart[i];
@@ -171,7 +194,7 @@ class ticket{
             t1.x=t1.y=t2.x=t2.y=0;
             if(d<t1||t2<d) continue;
             sjtu::pair<String,int>key(x.id,p);
-            int j=find_pos(x,t);
+            int j=find_pos(x,t_y);
             if(type){
                 int tim=x.t_arrive[j]-x.t_depart[i];
                 q.push(sjtu::pair<int,sjtu::pair<String,int> >(tim,key));
@@ -186,7 +209,7 @@ class ticket{
             int i=q.top().second.second;q.pop();
             train x;ts.f.ask_pos(ans[i],x);
             date_time t1,t2;
-            int l=find_pos(x,s),r=find_pos(x,t);
+            int l=find_pos(x,s_x),r=find_pos(x,t_y);
             t1=x.l;t1.y+=x.t_depart[l];t1.format();
             t2=x.l;t2.y+=x.t_arrive[r];t2.format();
             int ex=count_day(t1,d)-1;
@@ -197,12 +220,21 @@ class ticket{
         }
     }
     void query_transfer(String s,String t,date_time d,bool type=true){
+        int s_x,t_y;
+        if(!ts.station.find(s,s,s_x)){
+            printf("0\n");
+            return ;
+        }
+        if(!ts.station.find(t,t,t_y)){
+            printf("0\n");
+            return ;
+        }
         sjtu::vector<int>ans;
-        ts.passby.getall(s,ans);
+        ts.passby.getall(s_x,ans);
         sjtu::priority_queue<sjtu::pair<comp,trans> >q;
         for(int i=0;i<ans.size();i++){
             train x;ts.f.ask_pos(ans[i],x);
-            int si=find_pos(x,s);
+            int si=find_pos(x,s_x);
 
             date_time t1=x.l,t2=x.r;
             t1.y+=x.t_depart[si];
@@ -218,13 +250,13 @@ class ticket{
             for(int ti=si+1;ti<x.sta_num;ti++){
                 t2=x.l;t2.y+=x.t_arrive[ti];t2.dy+=ex;t2.format();
 
-                sjtu::pair<String, String> key(x.sta[ti],t);
+                sjtu::pair<int, int> key(x.sta[ti],t_y);
                 sjtu::vector<int> ans2;
                 ts.road.getall(key,ans2);
                 for(int j=0;j<ans2.size();j++){
                     train y;ts.f.ask_pos(ans2[j],y);
                     if(x.id==y.id) continue;
-                    int ssi=find_pos(y,x.sta[ti]),tti=find_pos(y,t);
+                    int ssi=find_pos(y,x.sta[ti]),tti=find_pos(y,t_y);
                     date_time b1=y.r;b1.y+=y.t_depart[ssi];b1.format();
                     if(b1<t2){
                         continue;
@@ -270,8 +302,8 @@ class ticket{
             return ;
         }
         trans x=q.top().second;
-        std::cout<<x.id1<<' '<<s<<' '<<x.a1<<" -> "<<x.s<<' '<<x.a2<<' '<<x.price1<<' '<<x.num1<<std::endl;
-        std::cout<<x.id2<<' '<<x.s<<' '<<x.b1<<" -> "<<t<<' '<<x.b2<<' '<<x.price2<<' '<<x.num2<<std::endl;
+        std::cout<<x.id1<<' '<<s<<' '<<x.a1<<" -> "<<station_print(x.s)<<' '<<x.a2<<' '<<x.price1<<' '<<x.num1<<std::endl;
+        std::cout<<x.id2<<' '<<station_print(x.s)<<' '<<x.b1<<" -> "<<t<<' '<<x.b2<<' '<<x.price2<<' '<<x.num2<<std::endl;
     }
     void refund_ticket(String user,int num){
         sjtu::vector<int> ans;
@@ -321,7 +353,7 @@ class ticket{
         f.updata(nw.pos,nw);
         printf("0\n");
     }
-    int find_pos(train &t,String s){
+    int find_pos(train &t,int s){
         for(int i=0;i<t.sta_num;i++){
             if(t.sta[i]==s){
                 return i;

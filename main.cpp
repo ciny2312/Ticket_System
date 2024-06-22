@@ -5,7 +5,7 @@ user_system us;
 train_system ts;
 ticket t;
 int main(){
-//    freopen("47.in","r",stdin);
+//    freopen("3.in","r",stdin);
 //    freopen("a.out","w",stdout);
     
     bool flag;
