@@ -10,7 +10,7 @@ include_directories(file)
 include_directories(users)
 include_directories(train)
 include_directories(ticket)
-include_directories(test)
+#include_directories(test)
 
 
 add_executable(code main.cpp )
